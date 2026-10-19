@@ -19,7 +19,7 @@
     --ok: #2563EB; --ok-bg: #EFF5FF; --ng: #DC2626; --ng-bg: #FFF1F1;
   }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  html, body { margin: 0; padding: 0; }
+  body { margin: 0; }
   body {
     font-family: 'Pretendard','Noto Sans KR',system-ui,sans-serif;
     font-size: 15px; line-height: 1.65; color: var(--text); background: var(--bg);
@@ -47,6 +47,11 @@
   h2 { font-size: 17px; color: var(--strong); margin: 22px 0 10px; }
   .muted { color: var(--muted); font-size: 13px; }
   .card { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; background: var(--card); }
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(31,31,31,.28); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-box { background: var(--bg); border: 1px solid var(--line2); border-radius: 8px; padding: 18px 18px 16px; max-width: 380px; width: 100%; box-shadow: 0 6px 24px rgba(0,0,0,.12); }
+  .modal-box .modal-msg { margin: 0 0 14px; color: var(--strong); }
+  .modal-box .q-actions { margin: 0; justify-content: flex-end; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--strong); outline-offset: 2px; }
   .card > :first-child { margin-top: 0; }
   .card > :last-child { margin-bottom: 0; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -57,6 +62,32 @@
   .test-tile .lv { font-weight: 600; color: var(--strong); }
   .test-tile .meta { font-size: 13px; color: var(--muted); margin: 2px 0 8px; }
   .test-tile .btns { display: flex; flex-wrap: wrap; gap: 4px; }
+  .unit-name { font-size: 16px; font-weight: 700; color: var(--strong); }
+  .unit-count { font-size: 13px; color: var(--muted); }
+  .part { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+  .part.first { border-top: 0; margin-top: 6px; padding-top: 0; }
+  .part-name { font-weight: 600; color: var(--strong); }
+  .unit-name.none { color: var(--muted); font-weight: 600; }
+  .part-title { font-weight: 600; color: var(--strong); }
+  /* 과목 색: 과목마다 파스텔 한 벌 (--sb 바탕, --sl 선, --si 글자) */
+  .subj-pill { display: inline-block; background: var(--sb); border: 1px solid var(--sl); color: var(--si); border-radius: 999px; padding: 1px 12px; font-weight: 600; }
+  h2 .subj-pill { font-size: 16px; padding: 3px 14px; }
+  .subj-top { font-size: 13px; margin: 14px 0 6px; }
+  .card.subj { background: var(--sb); border-color: var(--sl); }
+  .card.subj .test-tile { background: #FFFFFF; border-color: var(--sl); }
+  .card.subj .part { border-top-color: var(--sl); }
+  .card.subj .unit-count { color: var(--si); opacity: .8; }
+  .tag.subj { background: var(--sb); border-color: var(--sl); color: var(--si); font-weight: 600; }
+  .wn-item.subj-line { border-left: 4px solid var(--sl); }
+  .modal-box input[type=text] { width: 100%; margin: 0 0 14px; font-size: 15px; }
+  .load-tips { margin: 0 0 10px; padding-left: 1.2em; }
+  .load-tips li { margin: 2px 0; }
+  .drop { display: block; border: 1.5px dashed var(--line2); border-radius: 8px; padding: 14px 12px; background: #FFFFFF; cursor: pointer; margin: 8px 0 10px; }
+  .drop.over { border-color: var(--strong); background: var(--soft); }
+  .drop input[type=file] { display: block; max-width: 100%; }
+  .drop-txt { display: block; font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .load-batch { margin-bottom: 12px; }
+  .load-sum { font-weight: 600; color: var(--strong); margin: 4px 0; }
 
   .q-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
   .q-num { font-weight: 700; color: var(--strong); font-size: 16px; }
@@ -69,12 +100,18 @@
   .stem { font-size: 16px; color: var(--strong); margin-bottom: 12px; }
   .hint { font-size: 13px; color: var(--muted); margin: -6px 0 10px; }
 
-  .opt { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; margin-bottom: 7px; cursor: pointer; background: #FFFFFF; }
-  .opt:hover { background: var(--soft); }
-  .opt input { margin-top: 5px; }
-  .opt .lab { font-weight: 600; color: var(--muted); min-width: 1.4em; }
+  /* 선지: 동그라미·체크 칸은 숨기고 번호를 크게. 고르면 테두리를 굵게, 배경을 옅은 회색으로 */
+  .opt { position: relative; display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin-bottom: 7px; cursor: pointer; background: #FFFFFF; }
+  @media (hover: hover) { .opt:not(.locked):not(.sel):hover { background: var(--soft); } }
+  .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+  .opt:has(input:focus-visible) { outline: 2px solid var(--line2); outline-offset: 2px; }
+  .opt .lab { font-size: 22px; line-height: 25px; font-weight: 400; color: var(--muted); min-width: 1.1em; flex: none; }
+  .opt .txt { line-height: 25px; }
+  .opt.sel { border: 2px solid var(--strong); background: var(--mid); padding: 9px 13px; }
+  .opt.sel .lab { color: var(--strong); font-weight: 600; }
+  .opt.is-answer, .opt.my-wrong { padding: 9px 13px; }
   .opt.locked { cursor: default; }
-  .opt.locked:hover { background: #FFFFFF; }
+  .opt.locked .lab { color: var(--muted); }
   .opt.is-answer { border: 2px solid var(--ok); background: var(--ok-bg); }
   .opt.my-wrong { border: 2px solid var(--ng); background: var(--ng-bg); }
   .opt.my-wrong .txt { text-decoration: line-through; text-decoration-color: var(--line2); }
@@ -115,6 +152,13 @@
   .exp-block .v { font-size: 14px; }
   .q-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 
+  /* 이전·다음: 화면 위쪽에 붙어 있어서 해설이 길어도 스크롤 없이 넘어간다 */
+  .qnav { position: sticky; top: var(--hdr, 52px); z-index: 4; display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 8px 0; margin: 0 0 12px; border-bottom: 1px solid var(--line); }
+  .qnav .pos { flex: 1; text-align: center; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .qnav button { min-width: 88px; }
+  .key-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 10px; }
+  @media (hover: hover) and (pointer: fine) { .key-hint { display: block; } }
+  .key-hint kbd { font: inherit; border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: #FFFFFF; color: var(--strong); }
   .nav-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 16px; }
   .nav-grid button { width: 38px; padding: 4px 0; font-size: 13px; }
   .nav-grid button.cur { outline: 2px solid var(--strong); }
@@ -174,7 +218,7 @@
 'use strict';
 
 /* ───────────── 저장소: IndexedDB 우선, 안 되면 localStorage ───────────── */
-var Store = (function () {
+var LocalStore = (function () {
   var db = null, mode = 'none', LS = 'selftest-v1:';
   function useLS() {
     try { localStorage.setItem(LS + '__t', '1'); localStorage.removeItem(LS + '__t'); mode = 'ls'; }
@@ -213,11 +257,182 @@ var Store = (function () {
   return { open: open, get: get, set: set, mode: function () { return mode; } };
 })();
 
+/* ───────────── 계정 저장소: Claude 아티팩트로 열었을 때 (기기끼리 이어짐) ─────────────
+   각 기록(tests, progress, wrong, history, meta)을 버킷으로 나눠 저장한다.
+   버킷 하나 = 조각 문서들(kind.b.w.i) + 마지막에 쓰는 표지 문서(kind.b → {w, n}).
+   표지를 맨 마지막에 바꾸므로, 쓰다가 앱이 닫혀도 이전 내용이 그대로 남는다. */
+var CloudStore = (function () {
+  var KINDS = { tests: { map: true, B: 16 }, progress: { map: true, B: 16 }, wrong: { map: true, B: 32 }, history: { map: false, B: 1 }, meta: { map: false, B: 1 } };
+  var CH = 40000, GC_AGE = 10 * 60 * 1000;
+  var col = null, dev = Math.random().toString(36).slice(2, 10), seq = 0;
+  /* cur: 서버의 최신 버킷, base: 이 화면의 기록(S)이 마지막으로 맞춰진 버킷. 내가 바꾼 버킷만 쓴다 */
+  var docs = {}, cur = {}, base = {}, ptr = {}, queue = Promise.resolve(), api = { onRemote: null };
+
+  function hash(str) { var x = 2166136261; for (var i = 0; i < str.length; i++) { x ^= str.charCodeAt(i); x = Math.imul(x, 16777619); } return x >>> 0; }
+  function bk(kind, b) { return kind + '.' + b; }
+  function empty(kind) { return KINDS[kind].map ? '{}' : ''; }
+  function split(kind, v) {
+    var K = KINDS[kind];
+    if (!K.map) return [v == null ? '' : JSON.stringify(v)];
+    var parts = []; for (var b = 0; b < K.B; b++) parts.push({});
+    Object.keys(v || {}).forEach(function (k) { parts[hash(k) % K.B][k] = v[k]; });
+    return parts.map(function (o) { return JSON.stringify(o); });
+  }
+  function readBucket(kind, b) {
+    var k = bk(kind, b), p = docs[k];
+    if (!p || !p.w) return { w: '', n: 0, s: empty(kind) };
+    var s = '';
+    for (var i = 0; i < p.n; i++) { var c = docs[k + '.' + p.w + '.' + i]; if (!c || typeof c.s !== 'string') return null; s += c.s; }
+    try { if (s) JSON.parse(s); } catch (e) { return null; }
+    return { w: p.w, n: p.n, s: s };
+  }
+  function sync(initial) {
+    var changed = [];
+    Object.keys(KINDS).forEach(function (kind) {
+      for (var b = 0; b < KINDS[kind].B; b++) {
+        var r = readBucket(kind, b); if (!r) continue;
+        var k = bk(kind, b), c = cur[k];
+        if (c && c.w === r.w) continue;
+        if (!initial && (!r.w || r.w.split('_')[0] === dev)) continue;
+        cur[k] = { w: r.w, s: r.s }; ptr[k] = { w: r.w, n: r.n }; if (initial) base[k] = r.s;
+        if (changed.indexOf(kind) < 0) changed.push(kind);
+      }
+    });
+    return changed;
+  }
+  function peek(kind) {
+    var K = KINDS[kind];
+    try {
+      if (!K.map) { var c = cur[bk(kind, 0)]; return c && c.s ? JSON.parse(c.s) : undefined; }
+      var out = null;
+      for (var b = 0; b < K.B; b++) { var c2 = cur[bk(kind, b)]; if (c2 && c2.s && c2.s !== '{}') { var o = JSON.parse(c2.s); out = out || {}; for (var key in o) out[key] = o[key]; } }
+      return out || undefined;
+    } catch (e) { return undefined; }
+  }
+  function run(job) {
+    var n = Math.max(1, Math.ceil(job.s.length / CH)), p = Promise.resolve(), prev = ptr[job.k];
+    for (var i = 0; i < n; i++) (function (i) { p = p.then(function () { return col.doc(job.k + '.' + job.w + '.' + i).set({ s: job.s.slice(i * CH, (i + 1) * CH), i: i }); }); })(i);
+    p = p.then(function () { return col.doc(job.k).set({ w: job.w, n: n, t: Date.now() }); })
+      .then(function () {
+        ptr[job.k] = { w: job.w, n: n };
+        if (prev && prev.w && prev.w !== job.w) { var d = Promise.resolve(); for (var j = 0; j < prev.n; j++) (function (j) { d = d.then(function () { return col.doc(job.k + '.' + prev.w + '.' + j).delete(); }); })(j); return d.catch(function () {}); }
+      });
+    return p;
+  }
+  function set(kind, v) {
+    if (!KINDS[kind]) return Promise.resolve(true);
+    var jobs = [];
+    split(kind, v).forEach(function (s, b) {
+      var k = bk(kind, b), c = cur[k], was = base[k] != null ? base[k] : empty(kind);
+      if (was === s) return;
+      base[k] = s;
+      var w = dev + '_' + Date.now().toString(36) + '-' + (seq++).toString(36);
+      jobs.push({ k: k, w: w, s: s, before: c, was: was });
+      cur[k] = { w: w, s: s };
+    });
+    if (!jobs.length) return Promise.resolve(true);
+    var ok = true;
+    jobs.forEach(function (job) {
+      queue = queue.then(function () { return run(job); }).catch(function () {
+        ok = false; if (cur[job.k] && cur[job.k].w === job.w) { if (job.before) cur[job.k] = job.before; else delete cur[job.k]; } if (base[job.k] === job.s) base[job.k] = job.was;
+      });
+    });
+    return queue.then(function () { return ok; });
+  }
+  function gc() {
+    var now = Date.now();
+    Object.keys(docs).forEach(function (id) {
+      var m = id.split('.'); if (m.length !== 4) return;
+      var k = m[0] + '.' + m[1], p = ptr[k], t = parseInt((m[2].split('_')[1] || '').split('-')[0], 36);
+      if (p && p.w === m[2]) return;
+      if (isFinite(t) && now - t > GC_AGE) queue = queue.then(function () { return col.doc(id).delete(); }).catch(function () {});
+    });
+  }
+  function open() {
+    if (!(window.claude && typeof window.claude.use === 'function')) return Promise.resolve(false);
+    var wait = new Promise(function (r) { setTimeout(function () { r(null); }, 12000); });
+    return Promise.race([Promise.all([window.claude.use('db'), window.claude.use('user')]), wait]).then(function (a) {
+      if (!a || !a[0] || !a[1]) return false;
+      var db = a[0], user = a[1];
+      return user.id().then(function (uid) {
+        if (!uid) return false;
+        return Promise.resolve(user.can ? user.can('data.write') : null).then(function (cw) {
+          if (cw === false) return false;
+          col = db.collection('data/users/' + uid);
+          return col.limit(1000).get().then(function (snap) {
+            snap.docs.forEach(function (d) { docs[d.id] = d.data(); });
+            sync(true); gc();
+            col.onSnapshot(function (sn) {
+              sn.docChanges().forEach(function (ch) { if (ch.type === 'removed') delete docs[ch.doc.id]; else docs[ch.doc.id] = ch.doc.data(); });
+              var changed = sync(false);
+              if (changed.length && api.onRemote) api.onRemote(changed);
+            }, function () {});
+            return true;
+          });
+        });
+      });
+    }).catch(function () { return false; });
+  }
+  function accept(kind) { for (var b = 0; b < KINDS[kind].B; b++) { var k = bk(kind, b); base[k] = cur[k] ? cur[k].s : empty(kind); } }
+  api.open = open; api.set = set; api.peek = peek; api.accept = accept;
+  api.get = function (k) { return Promise.resolve(peek(k)); };
+  api.mode = function () { return 'cloud'; };
+  return api;
+})();
+
+/* 저장소 고르기: 아티팩트에서 계정 저장을 쓸 수 있으면 계정, 아니면 이 기기 */
+var Store = (function () {
+  var impl = LocalStore;
+  return {
+    open: function () { return CloudStore.open().then(function (ok) { if (ok) { impl = CloudStore; return; } return LocalStore.open(); }); },
+    get: function (k) { return impl.get(k); },
+    set: function (k, v) { return impl.set(k, v); },
+    mode: function () { return impl.mode(); }
+  };
+})();
+
 /* ───────────── 상태 ───────────── */
-var APP_VERSION = '2026.10.17';
+var APP_VERSION = '2026.10.19d';
 var S = { tests: {}, progress: {}, wrong: {}, history: [], meta: {} };
 var view = { name: 'home' };
 var timerHandle = null;
+var IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
+var pendingRemote = [];
+
+/* 확인 창: confirm()/alert()는 아티팩트에서 막혀 있어서 페이지 안에 직접 띄운다 */
+function askConfirm(msg, okLabel, noLabel) {
+  return new Promise(function (res) {
+    var o = document.createElement('div'); o.className = 'modal no-print';
+    o.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true"><p class="modal-msg"></p><div class="q-actions"><button class="primary" data-ok></button>' + (noLabel === null ? '' : '<button data-no></button>') + '</div></div>';
+    o.querySelector('.modal-msg').textContent = msg;
+    o.querySelector('[data-ok]').textContent = okLabel || '확인';
+    var no = o.querySelector('[data-no]'); if (no) no.textContent = noLabel || '취소';
+    function close(v) { o.remove(); document.removeEventListener('keydown', key); res(v); }
+    function key(e) { if (e.key === 'Escape') close(false); }
+    o.querySelector('[data-ok]').onclick = function () { close(true); };
+    if (no) no.onclick = function () { close(false); };
+    o.onclick = function (e) { if (e.target === o) close(false); };
+    document.addEventListener('keydown', key);
+    document.body.appendChild(o); o.querySelector('[data-ok]').focus();
+  });
+}
+function notice(msg) { return askConfirm(msg, '확인', null); }
+/* 글자 입력 창: prompt()도 아티팩트에서 막혀 있다 */
+function askText(msg, val, okLabel) {
+  return new Promise(function (res) {
+    var o = document.createElement('div'); o.className = 'modal no-print';
+    o.innerHTML = '<div class="modal-box" role="dialog" aria-modal="true"><p class="modal-msg"></p><input type="text" id="askTextIn"><div class="q-actions"><button class="primary" data-ok></button><button data-no>취소</button></div></div>';
+    o.querySelector('.modal-msg').textContent = msg;
+    var inp = o.querySelector('input'); inp.value = val || '';
+    o.querySelector('[data-ok]').textContent = okLabel || '확인';
+    function close(v) { o.remove(); res(v); }
+    o.querySelector('[data-ok]').onclick = function () { var v = cleanEdge(inp.value); if (v) close(v); else inp.focus(); };
+    o.querySelector('[data-no]').onclick = function () { close(null); };
+    inp.onkeydown = function (e) { if (e.key === 'Enter') o.querySelector('[data-ok]').click(); if (e.key === 'Escape') close(null); };
+    o.onclick = function (e) { if (e.target === o) close(null); };
+    document.body.appendChild(o); inp.focus(); inp.select();
+  });
+}
 
 function save(keys) {
   return Promise.all(keys.map(function (k) { return Store.set(k, S[k]); })).then(function (r) {
@@ -265,7 +480,137 @@ function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { va
 function range(n) { var a = []; for (var i = 0; i < n; i++) a.push(i); return a; }
 function sameArr(a, b) { if (!a || !b || a.length !== b.length) return false; for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; }
 function sameSet(a, b) { return sameArr(a.slice().sort(), b.slice().sort()); }
-function testId(t) { return [t.subject, t.lecture, t.level].join('|') + (lk(t) === '3ko' ? '|ko' : ''); }
+/* 단원(unit)은 선택 항목이다. 단원이 없는 예전 시험지는 id가 그대로라 기록이 이어진다 */
+function testId(t) { return (t.unit ? [t.subject, t.unit, t.lecture, t.level] : [t.subject, t.lecture, t.level]).join('|') + (lk(t) === '3ko' ? '|ko' : ''); }
+function lecLabel(o) { return o.unit ? o.unit + ' · ' + o.lecture : o.lecture; }
+/* 과목별 파스텔 색. 아는 과목은 정해진 색, 처음 보는 과목은 이름으로 남은 색 중 하나를 고른다 */
+var SUBJ_COLORS = [
+  { k: /성인/, c: ['#EDF3FC', '#C7D9F1', '#2F4E78'] },
+  { k: /아동|소아/, c: ['#FFF5E3', '#EFD8A8', '#76561B'] },
+  { k: /여성|모성/, c: ['#FCEFF3', '#EFC9D6', '#7A3550'] },
+  { k: /정신/, c: ['#F3F0FB', '#D6CDEF', '#4D4280'] },
+  { k: /지역/, c: ['#EBF6F0', '#C3E3D0', '#2D5F46'] },
+  { k: /통계/, c: ['#FDF0EA', '#F0CFBF', '#7A4430'] }
+];
+var SUBJ_EXTRA = [['#E9F5F7', '#BFE0E6', '#2A5C66'], ['#F2F5E8', '#D5DFBD', '#535F35'], ['#F8EFF8', '#E4CBE4', '#683A68'], ['#F4F1EA', '#DCD3BF', '#5E5236']];
+function subjColor(sub) {
+  sub = String(sub || '');
+  for (var i = 0; i < SUBJ_COLORS.length; i++) if (SUBJ_COLORS[i].k.test(sub)) return SUBJ_COLORS[i].c;
+  var x = 0; for (var j = 0; j < sub.length; j++) x = (x * 31 + sub.charCodeAt(j)) >>> 0;
+  return SUBJ_EXTRA[x % SUBJ_EXTRA.length];
+}
+function subjVars(sub) { var c = subjColor(sub); return ' style="--sb:' + c[0] + ';--sl:' + c[1] + ';--si:' + c[2] + '"'; }
+function subjPill(sub, cls) { return '<span class="subj-pill' + (cls ? ' ' + cls : '') + '"' + subjVars(sub) + '>' + esc(sub) + '</span>'; }
+function natCmp(a, b) { return String(a).localeCompare(String(b), 'ko', { numeric: true }); }
+
+/* ───────────── 주제·PART 정리 ─────────────
+   시험지마다 주제 이름이 조금씩 달라도(띄어쓰기, PART가 lecture에 붙어 옴, 주제가 빠짐) 한 주제로 묶는다.
+   - lecture에 PART가 있으면 앞부분은 주제(unit), PART는 "PART 1" 형태로 맞춘다
+   - 주제가 없으면 파일 이름에서 찾는다 (과목_주제_PART1_1단계.json)
+   - 띄어쓰기·기호만 다른 주제 이름은 같은 주제로 보고, 띄어쓰기가 가장 잘 된 이름 하나로 맞춘다 */
+function gkey(s) { return String(s == null ? '' : s).toLowerCase().replace(/[\s_\-·.,:;|()\[\]{}'"~]/g, ''); }
+var PART_RE = /(^|[^a-z])(?:part|파트)\s*[._\-]?\s*(전체|0*(\d+)(?:\s*[~\-–,&+]\s*(?:(?:part|파트)\s*[._\-]?\s*)?0*(\d+))?)/i;
+function cleanEdge(s) { return String(s || '').replace(/_/g, ' ').replace(/^[\s\-·.,:;|()\[\]]+|[\s\-·.,:;|(\[]+$/g, '').replace(/\s+/g, ' ').trim(); }
+function parsePart(s) {
+  var m = PART_RE.exec(String(s || '')); if (!m) return null;
+  var whole = m[2] === '전체' || !!m[4], post = String(s).slice(m.index + m[0].length).trim().replace(/^[\s(\[]+|[\s)\]]+$/g, '');
+  return { part: whole ? 'PART 전체' : 'PART ' + parseInt(m[3], 10), pre: cleanEdge(String(s).slice(0, m.index + m[1].length)), post: whole ? '' : cleanEdge(post) };
+}
+function stripSubj(s, subj) { s = cleanEdge(s); subj = cleanEdge(subj); if (subj && s.indexOf(subj) === 0) s = s.slice(subj.length); return cleanEdge(s); }
+function fileUnit(name, subject) {
+  /* 파일 이름에 PART가 있을 때만 믿는다 (예: 아동간호학_뇌기능장애아동의간호_PART1_1단계.json). "(1)" 같은 복사본 표시는 뺀다 */
+  var base = String(name || '').replace(/\.[^.]+$/, '').replace(/\s*\(\d+\)\s*$/, '').replace(/\s+\d+$/, '');
+  if (!parsePart(base)) return '';
+  var toks = base.split(/_+/), out = [];
+  toks.forEach(function (tk) {
+    var p = parsePart(tk);
+    if (p) { if (p.pre) out.push(p.pre); return; }
+    if (!tk || gkey(tk) === gkey(subject)) return;
+    if (/^(\d\s*단계.*|중간.*|기말.*|국가고시.*|국시.*|nclex.*|한국어|영어|모의고사.*)$/i.test(tk.trim())) return;
+    out.push(tk);
+  });
+  return cleanEdge(out.join(' '));
+}
+function splitLabel(o, hint) {
+  var u = o.unit ? cleanEdge(o.unit) : '', L = String(o.lecture || '').trim(), pl = parsePart(L), title = o.part_title ? cleanEdge(o.part_title) : '';
+  if (pl) { if (!u) u = stripSubj(pl.pre, o.subject); L = pl.part; if (!title) title = pl.post; }
+  else if (u) { var pu = parsePart(u); if (pu) { u = stripSubj(pu.pre, o.subject) || stripSubj(L, o.subject); L = pu.part; } }
+  if (!u && /^PART /.test(L) && hint) u = fileUnit(hint, o.subject);
+  if (!/^PART \d+$/.test(L)) title = '';
+  return { unit: u, lecture: L, title: title };
+}
+function spaces(s) { return (String(s).match(/\s/g) || []).length; }
+function pickName(list, spaceFirst) {
+  var cnt = {}; list.forEach(function (x) { cnt[x] = (cnt[x] || 0) + 1; });
+  return Object.keys(cnt).sort(function (a, b) { return spaceFirst ? (spaces(b) - spaces(a) || cnt[b] - cnt[a] || natCmp(a, b)) : (cnt[b] - cnt[a] || spaces(b) - spaces(a) || natCmp(a, b)); })[0];
+}
+function canonMaps(extra) {
+  var subj = {}, unit = {};
+  Object.keys(S.tests).map(function (k) { return S.tests[k]; }).concat(extra || []).forEach(function (t) {
+    var sk = gkey(t.subject); (subj[sk] = subj[sk] || []).push(cleanEdge(t.subject));
+    var p = splitLabel(t); if (p.unit) { var uk = sk + '|' + gkey(p.unit); (unit[uk] = unit[uk] || []).push(p.unit); }
+  });
+  var M = { subj: {}, unit: {} };
+  Object.keys(subj).forEach(function (k) { M.subj[k] = pickName(subj[k], false); });
+  Object.keys(unit).forEach(function (k) { M.unit[k] = pickName(unit[k], true); });
+  return M;
+}
+function canonOf(o, M, hint) {
+  var sk = gkey(o.subject), p = splitLabel(o, hint);
+  return { subject: M.subj[sk] || cleanEdge(o.subject), unit: p.unit ? (M.unit[sk + '|' + gkey(p.unit)] || p.unit) : '', lecture: p.lecture, title: p.title };
+}
+function withLabel(o, c) {
+  var r = Object.assign({}, o, { subject: c.subject, lecture: c.lecture });
+  if (c.unit) r.unit = c.unit; else delete r.unit;
+  if (c.title !== undefined) { if (c.title) r.part_title = c.title; else delete r.part_title; }
+  return r;
+}
+/* PART 소주제(part_title)는 묶는 기준이 아니라 이름표다. 같은 PART 시험지끼리 다르게 적혀 있으면 가장 많이 쓰인 이름 하나를 보여준다 */
+function partTitleOf(t) {
+  if (!t || !t.part_title) return '';
+  var list = Object.keys(S.tests).map(function (k) { return S.tests[k]; }).filter(function (x) { return x.subject === t.subject && (x.unit || '') === (t.unit || '') && x.lecture === t.lecture && x.part_title; }).map(function (x) { return x.part_title; });
+  return list.length ? pickName(list, false) : t.part_title;
+}
+function fullLabel(t) { var pt = partTitleOf(t); return lecLabel(t) + (pt ? ' · ' + pt : ''); }
+/* 저장된 시험지·푼 기록·오답노트·기록의 이름을 맞추고 id를 다시 붙인다. 바뀐 게 있으면 true */
+function migrate() {
+  var M = canonMaps(), byNew = {}, idMap = {}, changed = false;
+  Object.keys(S.tests).forEach(function (id) {
+    var t = S.tests[id], t2 = withLabel(t, canonOf(t, M)), nid = testId(t2);
+    if (nid !== id || t2.subject !== t.subject || t2.unit !== t.unit || t2.lecture !== t.lecture || t2.part_title !== t.part_title) changed = true;
+    idMap[id] = nid; (byNew[nid] = byNew[nid] || []).push({ id: id, t: t2 });
+  });
+  var nt = {}, np = {};
+  Object.keys(byNew).forEach(function (nid) {
+    var list = byNew[nid];
+    if (list.length > 1) { changed = true; list.sort(function (a, b) { var pa = S.progress[a.id], pb = S.progress[b.id]; return ((pb && pb.started) || '') > ((pa && pa.started) || '') ? 1 : -1; }); }
+    nt[nid] = list[0].t; if (S.progress[list[0].id]) np[nid] = S.progress[list[0].id];
+  });
+  Object.keys(S.progress).forEach(function (id) { if (!idMap[id] && !np[id]) np[id] = S.progress[id]; });
+  var nw = {};
+  Object.keys(S.wrong).forEach(function (qid) {
+    var w = S.wrong[qid], cut = qid.lastIndexOf('#'), tid = qid.slice(0, cut), suf = qid.slice(cut + 1), nid, meta;
+    if (idMap[tid]) { nid = idMap[tid]; meta = metaOf(nt[nid]); }
+    else { var m2 = withLabel(w.meta || {}, canonOf(w.meta || {}, M)); delete m2.testId; nid = testId(m2); m2.testId = nid; meta = m2; }
+    var nq = nid + '#' + suf, w2 = Object.assign({}, w, { qid: nq, meta: meta });
+    if (nq !== qid || meta.subject !== (w.meta || {}).subject || meta.unit !== (w.meta || {}).unit || meta.lecture !== (w.meta || {}).lecture) changed = true;
+    var old = nw[nq];
+    if (old) { changed = true; if ((old.wrongCount || 0) >= (w2.wrongCount || 0)) { old.flagged = old.flagged || w2.flagged; return; } w2.flagged = w2.flagged || old.flagged; }
+    nw[nq] = w2;
+  });
+  var nh = S.history.map(function (x) {
+    var c, nid;
+    if (idMap[x.testId]) { var t = nt[idMap[x.testId]]; c = { subject: t.subject, unit: t.unit || '', lecture: t.lecture }; nid = idMap[x.testId]; }
+    else { c = canonOf(x, M); nid = testId(withLabel(x, c)); }
+    var x2 = withLabel(x, c); x2.testId = nid;
+    if (nid !== x.testId || x2.subject !== x.subject || x2.unit !== x.unit || x2.lecture !== x.lecture) changed = true;
+    return x2;
+  });
+  if (!changed) return false;
+  S.tests = nt; S.progress = np; S.wrong = nw; S.history = nh;
+  return true;
+}
+function saveAll() { return save(['tests', 'progress', 'wrong', 'history']); }
 function now() { return new Date().toISOString(); }
 function dstr(iso) { if (!iso) return ''; var d = new Date(iso); return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 function mmss(sec) { sec = Math.max(0, Math.round(sec || 0)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); }
@@ -282,6 +627,8 @@ function validate(t) {
   if (t.format !== 'selftest-v1') E.push('format 값이 "selftest-v1"이 아니에요.');
   if (!t.subject) E.push('subject(과목)가 없어요.');
   if (!t.lecture) E.push('lecture(수업 회차)가 없어요.');
+  if (t.unit != null && (typeof t.unit !== 'string' || !t.unit.trim())) E.push('unit(단원)은 빈칸이 아닌 글자여야 해요. 단원이 없으면 unit을 빼 주세요.');
+  if (t.part_title != null && typeof t.part_title !== 'string') E.push('part_title(PART 소주제)은 글자여야 해요.');
   if ([1, 2, 3, 4, 5].indexOf(t.level) < 0) E.push('level은 1, 2, 3, 4, 5 중 하나여야 해요.');
   if (t.lang != null && t.lang !== 'ko' && t.lang !== 'en') E.push('lang은 "ko" 또는 "en"이어야 해요.');
   if (t.lang === 'ko' && t.level !== 3) W.push('lang "ko"는 3단계(NCLEX)에서만 쓰여요. 이 시험지에서는 무시돼요.');
@@ -386,7 +733,7 @@ function renderQuestion(el, ctx) {
     var ord = ctx.arrange.choiceOrder || range(q.choices.length);
     ord.forEach(function (ci, pos) {
       var ch = q.choices[ci], picked = resp && resp.indexOf(ci) >= 0, isAns = q.answer.indexOf(ci) >= 0;
-      var cls = 'opt' + (locked ? ' locked' : '') + (locked && isAns ? ' is-answer' : '') + (locked && picked && !isAns ? ' my-wrong' : '');
+      var cls = 'opt' + (locked ? ' locked' : '') + (!locked && picked ? ' sel' : '') + (locked && isAns ? ' is-answer' : '') + (locked && picked && !isAns ? ' my-wrong' : '');
       h += '<label class="' + cls + '"><input type="' + (q.type === 'mc' ? 'radio' : 'checkbox') + '" name="opt" value="' + ci + '"' + (picked ? ' checked' : '') + (locked ? ' disabled' : '') + '>';
       h += '<span class="lab">' + LETTERS[pos] + '</span><span><span class="txt">' + fmt(ch.t) + '</span>';
       if (locked) {
@@ -464,6 +811,7 @@ function renderQuestion(el, ctx) {
       el.querySelectorAll('input[name=opt]').forEach(function (inp) {
         inp.addEventListener('change', function () {
           var picked = [].slice.call(el.querySelectorAll('input[name=opt]:checked')).map(function (x) { return +x.value; });
+          el.querySelectorAll('label.opt').forEach(function (lb) { var x = lb.querySelector('input'); lb.classList.toggle('sel', !!(x && x.checked)); });
           ctx.setDraft(picked);
         });
       });
@@ -507,7 +855,7 @@ function renderQuestion(el, ctx) {
       (q.type === 'matrix' && d.some(function (x) { return x == null; })) ||
       (q.type === 'dropdown' && d.some(function (x) { return x == null; })) ||
       (q.type === 'short' && !String(d).trim());
-    if (incomplete) { alert('답을 모두 고른 뒤 채점해 주세요.'); return; }
+    if (incomplete) { notice('답을 모두 고른 뒤 채점해 주세요.'); return; }
     ctx.onSubmit(d);
   });
   var selfb = el.querySelector('[data-act=self]'); if (selfb) selfb.addEventListener('click', function () { ctx.onSelfGrade(); });
@@ -515,7 +863,7 @@ function renderQuestion(el, ctx) {
 }
 
 /* ───────────── 오답노트 기록 ───────────── */
-function metaOf(t) { return { subject: t.subject, lecture: t.lecture, level: t.level, lang: t.lang, testId: testId(t) }; }
+function metaOf(t) { var m = { subject: t.subject, lecture: t.lecture, level: t.level, lang: t.lang, testId: testId(t) }; if (t.unit) m.unit = t.unit; return m; }
 function caseFor(t, q) { var o = {}; if (q.caseId && t.cases && t.cases[q.caseId]) o[q.caseId] = t.cases[q.caseId]; return o; }
 function recordWrong(t, q, resp) {
   var qid = testId(t) + '#' + q.id, prev = S.wrong[qid] ? JSON.parse(JSON.stringify(S.wrong[qid])) : null;
@@ -549,43 +897,78 @@ function viewHome() {
   var h = '<h1>시험지</h1>';
   if (ids.length) {
     var lb = S.meta && S.meta.lastBackup, days = lb ? Math.floor((Date.now() - new Date(lb).getTime()) / 86400000) : null;
-    if (days == null || days >= 7) h += '<div class="banner row no-print"><span>' + (days == null ? '아직 백업한 적이 없어요.' : '마지막 백업이 ' + days + '일 전이에요.') + ' 기록은 이 기기에만 저장되니 가끔 백업해 두세요.</span><span class="spacer"></span><button class="small" data-go="backup">백업하러 가기</button></div>';
+    var cloud = Store.mode() === 'cloud';
+    if (days == null || days >= (cloud ? 30 : 7)) h += '<div class="banner row no-print"><span>' + (days == null ? '아직 백업한 적이 없어요.' : '마지막 백업이 ' + days + '일 전이에요.') + (cloud ? ' 기록은 Claude 계정에 저장되지만, 가끔 백업 파일도 받아 두면 안전해요.' : ' 기록은 이 기기에만 저장되니 가끔 백업해 두세요.') + '</span><span class="spacer"></span><button class="small" data-go="backup">백업하러 가기</button></div>';
   }
   if (!ids.length) {
     h += '<div class="card"><p>아직 불러온 시험지가 없어요.</p><p class="muted">프로젝트에서 받은 시험지 파일(.json)을 <strong>시험지 불러오기</strong>에서 넣으면 여기 나타나요. 한 번 넣은 시험지와 푼 기록은 창을 닫아도 남아 있어요.</p><button class="primary" data-go="load">시험지 불러오기</button></div>';
     app.innerHTML = h; bindGo(); return;
   }
-  var groups = {};
-  ids.forEach(function (id) { var t = S.tests[id]; (groups[t.subject] = groups[t.subject] || {}); (groups[t.subject][t.lecture] = groups[t.subject][t.lecture] || []).push(t); });
-  Object.keys(groups).sort().forEach(function (sub) {
-    h += '<h2>' + esc(sub) + '</h2>';
-    Object.keys(groups[sub]).sort().forEach(function (lec) {
-      h += '<div class="card"><div class="row"><strong>' + esc(lec) + '</strong></div><div class="test-grid">';
-      groups[sub][lec].sort(function (a, b) { return LEVEL_ORDER.indexOf(lk(a)) - LEVEL_ORDER.indexOf(lk(b)); }).forEach(function (t) {
-        var id = testId(t), p = S.progress[id], n = t.questions.length;
-        var answered = p ? Object.keys(p.answers || {}).length : 0;
-        var last = S.history.filter(function (x) { return x.testId === id; }).slice(-1)[0];
-        var meta = p && !p.done && answered ? '푸는 중 ' + answered + '/' + n : (last ? '최근 ' + last.correct + '/' + last.total + '점' : n + '문제');
-        h += '<div class="test-tile"><div class="lv">' + LEVEL[lk(t)] + '</div><div class="meta">' + meta + '</div><div class="btns">';
-        if (p && !p.done && answered) h += '<button class="small primary" data-start="' + esc(id) + '">이어 풀기</button><button class="small" data-restart="' + esc(id) + '">처음부터</button>';
-        else if (p && p.done) h += '<button class="small" data-review="' + esc(id) + '">결과 보기</button><button class="small primary" data-restart="' + esc(id) + '">다시 풀기</button>';
-        else h += '<button class="small primary" data-start="' + esc(id) + '">풀기</button>';
-        h += '<button class="small" data-del="' + esc(id) + '">삭제</button></div></div>';
-      });
-      h += '</div></div>';
+  /* 과목 > 주제 > PART > 단계. 주제가 없는 시험지는 예전처럼 회차 카드로 바로 보인다.
+     주제 이름이 없는 PART 시험지는 "주제 이름 없음" 카드에 모이고, 이름을 정해 줄 수 있다 */
+  var groups = {}, renames = [];
+  ids.forEach(function (id) {
+    var t = S.tests[id], g = groups[t.subject] = groups[t.subject] || { units: {}, lecs: {} };
+    var uname = t.unit || (/^PART /.test(t.lecture) ? '' : null);
+    if (uname != null) { var u = g.units[uname] = g.units[uname] || {}; (u[t.lecture] = u[t.lecture] || []).push(t); }
+    else (g.lecs[t.lecture] = g.lecs[t.lecture] || []).push(t);
+  });
+  function tiles(list) {
+    var s = '<div class="test-grid">';
+    list.sort(function (a, b) { return LEVEL_ORDER.indexOf(lk(a)) - LEVEL_ORDER.indexOf(lk(b)); }).forEach(function (t) {
+      var id = testId(t), p = S.progress[id], n = t.questions.length;
+      var answered = p ? Object.keys(p.answers || {}).length : 0;
+      var last = S.history.filter(function (x) { return x.testId === id; }).slice(-1)[0];
+      var meta = p && !p.done && answered ? '푸는 중 ' + answered + '/' + n : (last ? '최근 ' + last.correct + '/' + last.total + '점' : n + '문제');
+      s += '<div class="test-tile"><div class="lv">' + LEVEL[lk(t)] + '</div><div class="meta">' + meta + '</div><div class="btns">';
+      if (p && !p.done && answered) s += '<button class="small primary" data-start="' + esc(id) + '">이어 풀기</button><button class="small" data-restart="' + esc(id) + '">처음부터</button>';
+      else if (p && p.done) s += '<button class="small" data-review="' + esc(id) + '">결과 보기</button><button class="small primary" data-restart="' + esc(id) + '">다시 풀기</button>';
+      else s += '<button class="small primary" data-start="' + esc(id) + '">풀기</button>';
+      s += '<button class="small" data-del="' + esc(id) + '">삭제</button></div></div>';
+    });
+    return s + '</div>';
+  }
+  Object.keys(groups).sort(natCmp).forEach(function (sub) {
+    var g = groups[sub];
+    h += '<h2>' + subjPill(sub) + '</h2>'; var sv = subjVars(sub);
+    var entries = Object.keys(g.units).map(function (u) { return { unit: u }; }).concat(Object.keys(g.lecs).map(function (l) { return { lec: l }; }));
+    entries.sort(function (a, b) { var x = a.lec != null ? a.lec : (a.unit || '￿'), y = b.lec != null ? b.lec : (b.unit || '￿'); return natCmp(x, y); }).forEach(function (e) {
+      if (e.lec != null) { h += '<div class="card subj"' + sv + '><div class="row"><strong>' + esc(e.lec) + '</strong></div>' + tiles(g.lecs[e.lec]) + '</div>'; return; }
+      var u = g.units[e.unit], parts = Object.keys(u).sort(natCmp);
+      var nPart = parts.filter(function (p) { return /^PART \d+$/.test(p); }).length;
+      var count = nPart && parts.every(function (p) { return /^PART /.test(p); }) ? 'PART ' + nPart + '개' : parts.length + '개 회차';
+      renames.push({ subject: sub, unit: e.unit });
+      h += '<div class="card subj"' + sv + '><div class="row">' + (e.unit ? '<span class="unit-name">' + esc(e.unit) + '</span>' : '<span class="unit-name none">주제 이름 없음</span>') + '<span class="unit-count">' + count + '</span><span class="spacer"></span><button class="small no-print" data-rn="' + (renames.length - 1) + '">' + (e.unit ? '이름 바꾸기' : '주제 이름 정하기') + '</button></div>';
+      parts.forEach(function (lec, k) { var pt = partTitleOf(u[lec].filter(function (x) { return x.part_title; })[0]); h += '<div class="part' + (k === 0 ? ' first' : '') + '"><div class="part-name">' + esc(lec) + (pt ? '<span class="part-title"> · ' + esc(pt) + '</span>' : '') + '</div>' + tiles(u[lec]) + '</div>'; });
+      h += '</div>';
     });
   });
   app.innerHTML = h;
   bindGo();
+  app.querySelectorAll('[data-rn]').forEach(function (b) { b.onclick = function () { var r = renames[+b.getAttribute('data-rn')]; renameUnit(r.subject, r.unit); }; });
   app.querySelectorAll('[data-start]').forEach(function (b) { b.onclick = function () { startTest(b.getAttribute('data-start'), false); }; });
-  app.querySelectorAll('[data-restart]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-restart'); var p = S.progress[id]; if (p && !p.done && Object.keys(p.answers || {}).length && !confirm('지금까지 푼 기록을 지우고 처음부터 풀까요?')) return; startTest(id, true); }; });
+  app.querySelectorAll('[data-restart]').forEach(function (b) { b.onclick = function () { var id = b.getAttribute('data-restart'); var p = S.progress[id]; if (p && !p.done && Object.keys(p.answers || {}).length) { askConfirm('지금까지 푼 기록을 지우고 처음부터 풀까요?', '처음부터 풀기').then(function (ok) { if (ok) startTest(id, true); }); return; } startTest(id, true); }; });
   app.querySelectorAll('[data-review]').forEach(function (b) { b.onclick = function () { view = { name: 'test', id: b.getAttribute('data-review'), idx: 0, summary: true }; render(); }; });
   app.querySelectorAll('[data-del]').forEach(function (b) {
     b.onclick = function () {
       var id = b.getAttribute('data-del');
-      if (!confirm('이 시험지를 삭제할까요? (오답노트와 기록은 남아요)')) return;
-      delete S.tests[id]; delete S.progress[id]; save(['tests', 'progress']).then(render);
+      askConfirm('이 시험지를 삭제할까요? (오답노트와 기록은 남아요)', '삭제').then(function (ok) {
+        if (!ok) return;
+        delete S.tests[id]; delete S.progress[id]; save(['tests', 'progress']).then(render);
+      });
     };
+  });
+}
+/* 주제 이름 바꾸기: 같은 이름(띄어쓰기만 다른 것 포함)으로 바꾸면 그 주제 안으로 합쳐진다 */
+function renameUnit(subject, unit) {
+  askText(unit ? '주제 이름을 바꿔요. 다른 주제와 같은 이름으로 바꾸면 그 주제 안으로 합쳐져요.' : '이 PART 시험지들이 들어갈 주제 이름을 적어 주세요. 이미 있는 주제 이름을 적으면 그 안으로 들어가요.', unit, '바꾸기').then(function (n) {
+    if (!n || n === unit) return;
+    Object.keys(S.tests).forEach(function (id) {
+      var t = S.tests[id]; if (t.subject !== subject) return;
+      var cur = t.unit || '';
+      if ((unit ? cur === unit : (!cur && /^PART /.test(t.lecture))) || (cur && gkey(cur) === gkey(n))) t.unit = n;
+    });
+    migrate(); saveAll().then(render);
   });
 }
 function bindGo() { app.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { view = { name: b.getAttribute('data-go') }; render(); }; }); }
@@ -611,14 +994,14 @@ function viewTest() {
   var h = '<div class="row no-print"><button class="small" data-go="home">← 시험지 목록</button><span class="spacer"></span>';
   if (t.level === 3) h += '<span class="timer" id="timer">' + (p.timerOn ? mmss(p.elapsed) : '') + '</span><button class="small" id="tmr">' + (p.timerOn ? '타이머 끄기' : '타이머 켜기') + '</button>';
   h += '</div>';
-  h += '<h1 style="margin-bottom:4px">' + esc(t.subject) + ' · ' + esc(t.lecture) + '</h1><div class="muted">' + LEVEL[lk(t)] + ' · 푼 문제 ' + answered + '/' + n + ' · 맞힌 문제 ' + correct + '</div>';
+  h += '<div class="subj-top">' + subjPill(t.subject) + '</div><h1 style="margin-bottom:4px">' + esc(fullLabel(t)) + '</h1><div class="muted">' + LEVEL[lk(t)] + ' · 푼 문제 ' + answered + '/' + n + ' · 맞힌 문제 ' + correct + '</div>';
   h += '<div class="progress"><div style="width:' + (answered / n * 100) + '%"></div></div>';
-  h += '<div class="card" id="qbox"></div>';
-  h += '<div class="row no-print"><button id="prev"' + (idx === 0 ? ' disabled' : '') + '>← 이전</button><span class="spacer"></span>';
+  h += '<div class="qnav no-print"><button id="prev"' + (idx === 0 ? ' disabled' : '') + '>← 이전</button><span class="pos">' + (idx + 1) + ' / ' + n + '</span>';
   h += answered === n ? '<button class="primary" id="finish">결과 보기</button>' : '<button id="next"' + (idx === n - 1 ? ' disabled' : '') + '>다음 →</button>';
-  h += '</div><div class="nav-grid no-print">';
+  h += '</div><div class="card" id="qbox"></div>';
+  h += '<div class="nav-grid no-print">';
   p.order.forEach(function (qi, k) { var a = p.answers[t.questions[qi].id]; h += '<button data-jump="' + k + '" class="' + (k === idx ? 'cur ' : '') + (a ? (a.correct ? 'ok' : 'ng') : '') + '">' + (k + 1) + '</button>'; });
-  h += '</div>';
+  h += '</div>' + KEY_HINT;
   app.innerHTML = h; bindGo();
 
   var g = p.answers[q.id];
@@ -659,7 +1042,7 @@ function countCorrect(t, p) { return Object.keys(p.answers).filter(function (k) 
 function finishIfDone(t, p) {
   if (p.done || Object.keys(p.answers).length < t.questions.length) return;
   p.done = true; p.finished = now();
-  S.history.push({ testId: testId(t), subject: t.subject, lecture: t.lecture, level: t.level, lang: t.lang, started: p.started, finished: p.finished, correct: countCorrect(t, p), total: t.questions.length, elapsed: t.level === 3 && p.timerOn ? p.elapsed : null });
+  S.history.push({ testId: testId(t), subject: t.subject, unit: t.unit, lecture: t.lecture, level: t.level, lang: t.lang, started: p.started, finished: p.finished, correct: countCorrect(t, p), total: t.questions.length, elapsed: t.level === 3 && p.timerOn ? p.elapsed : null });
   save(['history']);
 }
 function startTimer(t, p) {
@@ -677,7 +1060,7 @@ function viewSummary(t, p) {
   var n = t.questions.length, c = countCorrect(t, p);
   var wrongs = p.order.map(function (qi, k) { return { k: k, q: t.questions[qi] }; }).filter(function (x) { var a = p.answers[x.q.id]; return a && !a.correct; });
   var h = '<div class="row no-print"><button class="small" data-go="home">← 시험지 목록</button></div>';
-  h += '<h1>' + esc(t.subject) + ' · ' + esc(t.lecture) + '</h1><div class="muted">' + LEVEL[lk(t)] + '</div>';
+  h += '<div class="subj-top">' + subjPill(t.subject) + '</div><h1>' + esc(fullLabel(t)) + '</h1><div class="muted">' + LEVEL[lk(t)] + '</div>';
   h += '<div class="card"><div class="verdict" style="font-size:24px">' + c + ' / ' + n + '</div><div class="muted">정답률 ' + Math.round(c / n * 100) + '%' + (p.timerOn && t.level === 3 ? ' · 소요시간 ' + mmss(p.elapsed) : '') + '</div>';
   var outQ = t.questions.filter(function (q) { return q.outside; });
   if (outQ.length) {
@@ -691,7 +1074,7 @@ function viewSummary(t, p) {
   }
   app.innerHTML = h; bindGo();
   document.getElementById('again').onclick = function () { startTest(view.id, true); };
-  document.getElementById('toWrong').onclick = function () { view = { name: 'wrong', filter: { subject: t.subject, lecture: t.lecture, level: lk(t) } }; render(); };
+  document.getElementById('toWrong').onclick = function () { view = { name: 'wrong', filter: { subject: t.subject, lecture: lecLabel(t), level: lk(t) } }; render(); };
   document.getElementById('look').onclick = function () { view.summary = false; view.idx = 0; render(); };
   app.querySelectorAll('[data-jump]').forEach(function (b) { b.onclick = function () { view.summary = false; view.idx = +b.getAttribute('data-jump'); render(); }; });
 }
@@ -703,7 +1086,7 @@ function viewWrong() {
   var all = Object.keys(S.wrong).map(function (k) { return S.wrong[k]; });
   function uniq(fn) { var o = {}; all.forEach(function (w) { o[fn(w)] = 1; }); return Object.keys(o).sort(); }
   var list = all.filter(function (w) {
-    return (!f.subject || w.meta.subject === f.subject) && (!f.lecture || w.meta.lecture === f.lecture) && (!f.level || lk(w.meta) === f.level);
+    return (!f.subject || w.meta.subject === f.subject) && (!f.lecture || lecLabel(w.meta) === f.lecture) && (!f.level || lk(w.meta) === f.level);
   });
   var tabs = { active: list.filter(function (w) { return w.status === 'active' && w.wrongCount > 0; }), flag: list.filter(function (w) { return w.flagged && w.status === 'active'; }), done: list.filter(function (w) { return w.status === 'done'; }) };
   var show = tabs[view.tab].sort(function (a, b) { return (b.lastWrong || b.added) > (a.lastWrong || a.added) ? 1 : -1; });
@@ -712,16 +1095,16 @@ function viewWrong() {
   h += '<div class="print-only"><h1>오답노트</h1><div class="muted">' + esc([f.subject, f.lecture, f.level ? LEVEL[f.level] : ''].filter(Boolean).join(' · ') || '전체') + ' · ' + ({ active: '복습 중', flag: '헷갈림', done: '복습 완료' })[view.tab] + ' · ' + dstr(now()) + '</div></div>';
   h += '<div class="row no-print">';
   h += sel('subject', '과목 전체', uniq(function (w) { return w.meta.subject; }), f.subject);
-  h += sel('lecture', '회차 전체', uniq(function (w) { return w.meta.lecture; }).filter(function (l) { return !f.subject || all.some(function (w) { return w.meta.lecture === l && w.meta.subject === f.subject; }); }), f.lecture);
+  h += sel('lecture', '회차 전체', uniq(function (w) { return lecLabel(w.meta); }).sort(natCmp).filter(function (l) { return !f.subject || all.some(function (w) { return lecLabel(w.meta) === l && w.meta.subject === f.subject; }); }), f.lecture);
   h += '<select data-f="level"><option value="">단계 전체</option>' + LEVEL_ORDER.map(function (l) { return '<option value="' + l + '"' + (f.level === l ? ' selected' : '') + '>' + LEVEL[l] + '</option>'; }).join('') + '</select>';
   h += '</div>';
   h += '<div class="tabs no-print">' + [['active', '복습 중'], ['flag', '헷갈림'], ['done', '복습 완료']].map(function (x) { return '<button data-tab="' + x[0] + '" class="' + (view.tab === x[0] ? 'on' : '') + '">' + x[1] + ' ' + tabs[x[0]].length + '</button>'; }).join('') + '</div>';
   h += '<div class="muted no-print" style="margin-bottom:10px">오답노트에서 다시 풀어 2번 연속 맞히면 복습 완료로 옮겨져요.</div>';
-  if (show.length) h += '<div class="row no-print" style="margin-bottom:12px"><button class="primary" id="retryAll">이 목록 다시 풀기 (' + show.length + ')</button><button id="printBtn">인쇄하기</button><button id="openAll">해설 모두 펼치기</button></div>';
+  if (show.length) h += '<div class="row no-print" style="margin-bottom:12px"><button class="primary" id="retryAll">이 목록 다시 풀기 (' + show.length + ')</button>' + (IN_CLAUDE ? '' : '<button id="printBtn">인쇄하기</button>') + '<button id="openAll">해설 모두 펼치기</button></div>';
   else h += '<div class="card muted">해당하는 문제가 없어요.</div>';
   show.forEach(function (w, i) {
     var q = w.q;
-    h += '<div class="card wn-item"><div class="row"><span class="tag">' + esc(w.meta.subject) + '</span><span class="tag">' + esc(w.meta.lecture) + '</span><span class="tag">' + LEVEL[lk(w.meta)] + '</span><span class="tag">' + TYPE[q.type] + '</span>' + (q.outside ? '<span class="tag out">자료 밖</span>' : '') + (w.flagged ? '<span class="tag">헷갈림</span>' : '') + '<span class="spacer"></span><span class="muted">틀린 횟수 ' + (w.wrongCount || 0) + (w.lastWrong ? ' · ' + dstr(w.lastWrong) : '') + (w.status === 'active' && w.wrongCount ? ' · 연속 정답 ' + (w.streak || 0) + '/2' : '') + '</span></div>';
+    h += '<div class="card wn-item subj-line"' + subjVars(w.meta.subject) + '><div class="row"><span class="tag subj">' + esc(w.meta.subject) + '</span><span class="tag">' + esc(lecLabel(w.meta)) + '</span><span class="tag">' + LEVEL[lk(w.meta)] + '</span><span class="tag">' + TYPE[q.type] + '</span>' + (q.outside ? '<span class="tag out">자료 밖</span>' : '') + (w.flagged ? '<span class="tag">헷갈림</span>' : '') + '<span class="spacer"></span><span class="muted">틀린 횟수 ' + (w.wrongCount || 0) + (w.lastWrong ? ' · ' + dstr(w.lastWrong) : '') + (w.status === 'active' && w.wrongCount ? ' · 연속 정답 ' + (w.streak || 0) + '/2' : '') + '</span></div>';
     h += '<div class="stem-prev">' + fmt(String(q.stem).replace(/\{\{\d+\}\}/g, '____')) + '</div>';
     h += '<div class="row no-print"><button class="small" data-retry="' + esc(w.qid) + '">다시 풀기</button><button class="small" data-open="' + i + '">해설 보기</button>' + (w.status === 'done' ? '<button class="small" data-reopen="' + esc(w.qid) + '">복습 중으로 되돌리기</button>' : '') + '<button class="small" data-remove="' + esc(w.qid) + '">오답노트에서 삭제</button></div>';
     h += '<div class="wn-detail" data-detail="' + i + '" style="display:none"></div></div>';
@@ -744,7 +1127,7 @@ function viewWrong() {
   app.querySelectorAll('[data-retry]').forEach(function (b) { b.onclick = function () { startRetry([b.getAttribute('data-retry')]); }; });
   var ra = document.getElementById('retryAll'); if (ra) ra.onclick = function () { startRetry(shuffle(show.map(function (w) { return w.qid; }))); };
   app.querySelectorAll('[data-reopen]').forEach(function (b) { b.onclick = function () { var w = S.wrong[b.getAttribute('data-reopen')]; w.status = 'active'; w.streak = 0; save(['wrong']).then(render); }; });
-  app.querySelectorAll('[data-remove]').forEach(function (b) { b.onclick = function () { if (!confirm('오답노트에서 이 문제를 삭제할까요?')) return; delete S.wrong[b.getAttribute('data-remove')]; save(['wrong']).then(render); }; });
+  app.querySelectorAll('[data-remove]').forEach(function (b) { b.onclick = function () { askConfirm('오답노트에서 이 문제를 삭제할까요?', '삭제').then(function (ok) { if (!ok) return; delete S.wrong[b.getAttribute('data-remove')]; save(['wrong']).then(render); }); }; });
 }
 function sel(key, label, opts, val) { return '<select data-f="' + key + '"><option value="">' + label + '</option>' + opts.map(function (o) { return '<option' + (o === val ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; }
 
@@ -759,14 +1142,15 @@ function viewRetry() {
   if (!w) { view.idx = Math.min(idx + 1, items.length - 1); if (!S.wrong[items[view.idx].qid]) { backToWrong(); return; } return render(); }
   var done = items.filter(function (x) { return x.graded; }).length;
   var h = '<div class="row"><button class="small" id="back">← 오답노트</button><span class="spacer"></span><span class="muted">오답노트 복습 ' + (idx + 1) + ' / ' + items.length + '</span></div>';
-  h += '<div class="progress"><div style="width:' + (done / items.length * 100) + '%"></div></div><div class="card" id="qbox"></div>';
+  h += '<div class="progress"><div style="width:' + (done / items.length * 100) + '%"></div></div>';
+  h += '<div class="qnav"><button id="prev"' + (idx === 0 ? ' disabled' : '') + '>← 이전</button><span class="pos">' + (idx + 1) + ' / ' + items.length + '</span>' + (idx === items.length - 1 ? (done === items.length ? '<button class="primary" id="end">복습 끝내기</button>' : '<button disabled>다음 →</button>') : '<button id="next">다음 →</button>') + '</div>';
   if (it.outcome) h += '<div class="banner">' + it.outcome + '</div>';
-  h += '<div class="row"><button id="prev"' + (idx === 0 ? ' disabled' : '') + '>← 이전</button><span class="spacer"></span>' + (idx === items.length - 1 ? (done === items.length ? '<button class="primary" id="end">복습 끝내기</button>' : '') : '<button id="next">다음 →</button>') + '</div>';
+  h += '<div class="card" id="qbox"></div>' + KEY_HINT;
   app.innerHTML = h;
-  var fakeT = { subject: w.meta.subject, lecture: w.meta.lecture, level: w.meta.level, cases: w.cases };
+  var fakeT = { subject: w.meta.subject, unit: w.meta.unit, lecture: w.meta.lecture, level: w.meta.level, lang: w.meta.lang, cases: w.cases };
   function draw() {
     renderQuestion(document.getElementById('qbox'), {
-      q: w.q, cases: w.cases, numLabel: '복습', meta: w.meta.subject + ' · ' + w.meta.lecture + ' · ' + LEVEL[lk(w.meta)],
+      q: w.q, cases: w.cases, numLabel: '복습', meta: w.meta.subject + ' · ' + lecLabel(w.meta) + ' · ' + LEVEL[lk(w.meta)],
       arrange: it.arrange, draft: it.draft, graded: it.graded,
       getDraft: function () { return it.draft != null ? JSON.parse(JSON.stringify(it.draft)) : null; },
       setDraft: function (d, redraw) { it.draft = d; if (redraw) draw(); },
@@ -803,51 +1187,116 @@ function viewHistory() {
   var h = '<h1>기록</h1>';
   if (!S.history.length) { app.innerHTML = h + '<div class="card muted">아직 끝까지 푼 시험지가 없어요.</div>'; return; }
   h += '<div class="card"><table class="hist"><tr><th>날짜</th><th>과목 · 회차</th><th>단계</th><th>점수</th><th>시간</th></tr>';
-  S.history.slice().reverse().forEach(function (x) { h += '<tr><td>' + dstr(x.finished) + '</td><td>' + esc(x.subject) + ' · ' + esc(x.lecture) + '</td><td>' + LEVEL[lk(x)] + '</td><td>' + x.correct + ' / ' + x.total + '</td><td>' + (x.elapsed != null ? mmss(x.elapsed) : '') + '</td></tr>'; });
+  S.history.slice().reverse().forEach(function (x) { h += '<tr><td>' + dstr(x.finished) + '</td><td>' + subjPill(x.subject, 'tag') + ' ' + esc(lecLabel(x)) + '</td><td>' + LEVEL[lk(x)] + '</td><td>' + x.correct + ' / ' + x.total + '</td><td>' + (x.elapsed != null ? mmss(x.elapsed) : '') + '</td></tr>'; });
   app.innerHTML = h + '</table></div>';
 }
 
 /* ───────────── 화면: 불러오기 ───────────── */
 function viewLoad() {
   var h = '<h1>시험지 불러오기</h1>';
-  h += '<div class="card"><p><strong>파일로 불러오기</strong></p><p class="muted">프로젝트에서 받은 시험지 파일(.json)을 고르세요. 여러 개를 한 번에 골라도 돼요. 같은 과목·회차·단계의 시험지를 다시 넣으면 새 것으로 바뀌어요.</p><input type="file" id="files" accept=".json,application/json" multiple></div>';
-  h += '<div class="card"><p><strong>붙여넣기로 불러오기</strong></p><p class="muted">파일 대신 시험지 내용(JSON)을 복사했다면 여기에 붙여넣으세요.</p><textarea id="paste" placeholder="{ &quot;format&quot;: &quot;selftest-v1&quot;, ... }"></textarea><div class="q-actions"><button class="primary" id="pasteBtn">불러오기</button></div></div>';
+  h += '<div class="card"><p><strong>파일로 불러오기</strong></p>';
+  h += '<p class="muted">프로젝트에서 받은 시험지 파일(.json)을 고르세요. <strong>여러 개를 한 번에</strong> 넣을 수 있어요.</p>';
+  h += '<ul class="load-tips muted"><li>아이패드: 파일 창 오른쪽 위의 <strong>선택</strong>을 누르고, 넣을 파일을 모두 체크한 뒤 <strong>열기</strong>를 누르세요.</li><li>여러 파일을 압축한 <strong>.zip</strong> 파일 하나를 골라도 돼요. (파일 앱에서 파일들을 선택하고 길게 눌러 <strong>압축</strong>)</li><li>컴퓨터: 파일들을 아래 칸에 끌어다 놓아도 돼요.</li><li>하나씩 여러 번 골라도 결과가 아래에 계속 쌓여요.</li></ul>';
+  h += '<label class="drop" id="drop"><input type="file" id="files" accept=".json,.zip,application/json,application/zip" multiple><span class="drop-txt">파일 고르기 · 여기에 끌어다 놓기</span></label>';
+  h += '<p class="muted">같은 과목·주제·PART·단계의 시험지를 다시 넣으면 새 것으로 바뀌어요. 파일 이름에 PART가 있으면 같은 주제 안에 PART별로 모여요.</p></div>';
+  h += '<div class="card"><p><strong>붙여넣기로 불러오기</strong></p><p class="muted">파일 대신 시험지 내용(JSON)을 복사했다면 여기에 붙여넣으세요. 시험지 여러 개를 이어서 붙여넣어도 돼요.</p><textarea id="paste" placeholder="{ &quot;format&quot;: &quot;selftest-v1&quot;, ... }"></textarea><div class="q-actions"><button class="primary" id="pasteBtn">불러오기</button></div></div>';
   h += '<div id="loadMsg"></div>';
   app.innerHTML = h;
-  document.getElementById('files').onchange = function (ev) {
-    var fs = [].slice.call(ev.target.files || []);
-    Promise.all(fs.map(function (f) { return f.text().then(function (txt) { return { name: f.name, txt: txt }; }); })).then(function (arr) { importTexts(arr); ev.target.value = ''; });
-  };
-  document.getElementById('pasteBtn').onclick = function () { importTexts([{ name: '붙여넣은 내용', txt: document.getElementById('paste').value }]); };
+  var inp = document.getElementById('files'), drop = document.getElementById('drop');
+  inp.onchange = function () { var fs = [].slice.call(inp.files || []); inp.value = ''; readFiles(fs); };
+  ['dragenter', 'dragover'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { readFiles([].slice.call((e.dataTransfer && e.dataTransfer.files) || [])); });
+  document.getElementById('pasteBtn').onclick = function () { var ta = document.getElementById('paste'); importTexts(splitJsonTexts(ta.value, '붙여넣은 내용')); };
+}
+/* .zip은 필요할 때만 압축 풀기 도구를 불러온다 */
+var jszipP = null;
+function loadJSZip() {
+  if (window.JSZip) return Promise.resolve(window.JSZip);
+  if (!jszipP) jszipP = new Promise(function (res, rej) {
+    var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    sc.onload = function () { window.JSZip ? res(window.JSZip) : rej(new Error('no JSZip')); }; sc.onerror = function () { jszipP = null; rej(new Error('load failed')); };
+    document.head.appendChild(sc);
+  });
+  return jszipP;
+}
+function readFiles(fs) {
+  if (!fs.length) return;
+  var box = document.getElementById('loadMsg'); if (box) box.insertAdjacentHTML('afterbegin', '<div class="err" id="loadingNow">' + fs.length + '개 파일을 읽는 중이에요.</div>');
+  Promise.all(fs.map(function (f) {
+    if (/\.zip$/i.test(f.name) || /zip/.test(f.type || '')) {
+      return loadJSZip().then(function (JSZip) { return f.arrayBuffer().then(function (buf) { return JSZip.loadAsync(buf); }); }).then(function (zip) {
+        var ents = []; zip.forEach(function (path, e) { var base = path.split('/').pop(); if (!e.dir && /\.json$/i.test(base) && base[0] !== '.' && path.indexOf('__MACOSX') < 0) ents.push({ name: base, e: e }); });
+        if (!ents.length) return [{ name: f.name, err: '압축 파일 안에 .json 시험지가 없어요.' }];
+        return Promise.all(ents.map(function (x) { return x.e.async('string').then(function (txt) { return { name: x.name, txt: txt }; }); }));
+      }).catch(function () { return [{ name: f.name, err: '압축을 풀지 못했어요. 인터넷 연결을 확인하거나, 압축을 풀어서 .json 파일들을 직접 골라 주세요.' }]; });
+    }
+    return f.text().then(function (txt) { return [{ name: f.name, txt: txt }]; }, function () { return [{ name: f.name, err: '파일을 읽지 못했어요.' }]; });
+  })).then(function (lists) {
+    var ld = document.getElementById('loadingNow'); if (ld) ld.remove();
+    var arr = [];
+    lists.forEach(function (l) { l.forEach(function (x) { if (x.err) arr.push(x); else arr = arr.concat(splitJsonTexts(x.txt, x.name)); }); });
+    importTexts(arr);
+  });
+}
+/* 한 칸(또는 한 파일)에 시험지가 여러 개 들어 있으면 하나씩 나눈다: JSON 배열, 또는 { } { } 처럼 이어 붙인 것 */
+function splitJsonTexts(txt, name) {
+  txt = String(txt || '').trim();
+  try { var d = JSON.parse(txt); if (Array.isArray(d) && d.length && d.every(function (x) { return x && typeof x === 'object' && x.format; })) return d.map(function (x, i) { return { name: name + (d.length > 1 ? ' (' + (i + 1) + ')' : ''), data: x }; }); return [{ name: name, data: d }]; } catch (e) {}
+  var parts = [], depth = 0, start = -1, inStr = false, escp = false;
+  for (var i = 0; i < txt.length; i++) {
+    var c = txt[i];
+    if (inStr) { if (escp) escp = false; else if (c === '\\') escp = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') { if (depth === 0) start = i; depth++; }
+    else if (c === '}') { depth--; if (depth === 0 && start >= 0) { parts.push(txt.slice(start, i + 1)); start = -1; } }
+  }
+  if (parts.length < 2) return [{ name: name, txt: txt }];
+  return parts.map(function (t, k) { return { name: name + ' (' + (k + 1) + ')', txt: t }; });
 }
 function importTexts(arr) {
-  var msgs = [], changed = false, backup = false;
+  var msgs = [], changed = false, ok = 0, bad = 0;
   arr.forEach(function (a) {
-    var data;
-    try { data = JSON.parse(a.txt); } catch (e) { msgs.push('✕ ' + a.name + ': JSON 형식이 올바르지 않아요. (' + e.message + ')'); return; }
-    if (data && data.format === 'selftest-backup-v1') { mergeBackup(data); backup = true; changed = true; msgs.push('○ ' + a.name + ': 백업을 복원했어요.'); return; }
+    if (a.err) { bad++; msgs.push('✕ ' + a.name + ': ' + a.err); return; }
+    var data = a.data;
+    if (data === undefined) { try { data = JSON.parse(a.txt); } catch (e) { bad++; msgs.push('✕ ' + a.name + ': JSON 형식이 올바르지 않아요. (' + e.message + ')'); return; } }
+    if (data && data.format === 'selftest-backup-v1') { mergeBackup(data); changed = true; ok++; msgs.push('○ ' + a.name + ': 백업을 복원했어요.'); return; }
     var v = validate(data);
-    if (v.errors.length) { msgs.push('✕ ' + a.name + ': 불러오지 못했어요.\n  - ' + v.errors.slice(0, 12).join('\n  - ') + (v.errors.length > 12 ? '\n  - 외 ' + (v.errors.length - 12) + '개' : '')); return; }
+    if (v.errors.length) { bad++; msgs.push('✕ ' + a.name + ': 불러오지 못했어요.\n  - ' + v.errors.slice(0, 12).join('\n  - ') + (v.errors.length > 12 ? '\n  - 외 ' + (v.errors.length - 12) + '개' : '')); return; }
+    data = withLabel(data, canonOf(data, canonMaps([data]), /\.json$/i.test(a.name) ? a.name : ''));
     var id = testId(data), existed = !!S.tests[id];
-    S.tests[id] = data; delete S.progress[id]; changed = true;
-    msgs.push('○ ' + a.name + ': ' + data.subject + ' · ' + data.lecture + ' · ' + LEVEL[lk(data)] + ' (' + data.questions.length + '문제) ' + (existed ? '새 것으로 바꿨어요.' : '불러왔어요.') + (v.warnings.length ? '\n  참고: ' + v.warnings.slice(0, 5).join('\n  참고: ') : ''));
+    S.tests[id] = data; delete S.progress[id]; changed = true; ok++;
+    msgs.push('○ ' + a.name + ': ' + data.subject + ' · ' + lecLabel(data) + (data.part_title ? ' · ' + data.part_title : '') + ' · ' + LEVEL[lk(data)] + ' (' + data.questions.length + '문제) ' + (existed ? '새 것으로 바꿨어요.' : '불러왔어요.') + (v.warnings.length ? '\n  참고: ' + v.warnings.slice(0, 5).join('\n  참고: ') : ''));
   });
-  var done = function () { document.getElementById('loadMsg').innerHTML = msgs.map(function (m) { return '<div class="err">' + esc(m) + '</div>'; }).join('') + (changed ? '<div class="q-actions"><button class="primary" data-go="home">시험지 목록으로</button></div>' : ''); bindGo(); };
-  if (changed) save(backup ? ['tests', 'progress', 'wrong', 'history'] : ['tests', 'progress']).then(done); else done();
+  var done = function () {
+    var box = document.getElementById('loadMsg'); if (!box) return;
+    var old = box.querySelector('.load-go'); if (old) old.remove();
+    var head = arr.length > 1 ? '<div class="load-sum">' + arr.length + '개 중 ' + ok + '개를 불러왔어요' + (bad ? ', ' + bad + '개는 불러오지 못했어요' : '') + '.</div>' : '';
+    box.insertAdjacentHTML('afterbegin', '<div class="load-batch">' + head + msgs.map(function (m) { return '<div class="err">' + esc(m) + '</div>'; }).join('') + '</div>');
+    if (changed || box.querySelector('.load-batch')) box.insertAdjacentHTML('afterbegin', '<div class="q-actions load-go"><button class="primary" data-go="home">시험지 목록으로</button></div>');
+    bindGo();
+  };
+  if (changed) { migrate(); saveAll().then(done); } else done();
 }
 
 /* ───────────── 화면: 백업 ───────────── */
 function viewBackup() {
   var h = '<h1>백업</h1>';
   var lb = S.meta && S.meta.lastBackup;
-  h += '<div class="card"><p>시험지, 푼 기록, 오답노트는 <strong>이 기기의 이 앱(또는 브라우저)</strong>에만 저장돼요. 앱을 지우거나 다른 기기에서 열면 보이지 않으니, 가끔 백업 파일로 내보내 두세요.</p>';
-  h += '<p class="muted">홈 화면에 추가한 앱과 사파리·크롬은 기록을 따로 저장해요. 옮길 때는 백업 파일을 내보낸 뒤, 쓰려는 쪽에서 불러오세요.</p>';
+  if (Store.mode() === 'cloud') {
+    h += '<div class="card"><p>시험지, 푼 기록, 오답노트는 <strong>Claude 계정</strong>에 저장돼요. 이 페이지를 다른 기기에서 열어도 그대로 이어져요.</p>';
+    h += '<p class="muted">두 기기에서 동시에 같은 시험지를 풀면 나중에 저장한 쪽 기록이 남아요. 한 번에 한 기기에서 푸세요. 만약을 위해 가끔 백업 파일도 받아 두세요.</p>';
+  } else {
+    h += '<div class="card"><p>시험지, 푼 기록, 오답노트는 <strong>이 기기의 이 앱(또는 브라우저)</strong>에만 저장돼요. 앱을 지우거나 다른 기기에서 열면 보이지 않으니, 가끔 백업 파일로 내보내 두세요.</p>';
+    h += '<p class="muted">홈 화면에 추가한 앱과 사파리·크롬은 기록을 따로 저장해요. 옮길 때는 백업 파일을 내보낸 뒤, 쓰려는 쪽에서 불러오세요.</p>';
+  }
   h += '<p class="muted">마지막 백업: ' + (lb ? dstr(lb) : '없음') + '</p>';
   h += '<div class="q-actions"><button class="primary" id="exp">백업 파일 내보내기</button></div><div id="expMsg" class="muted"></div></div>';
   h += '<div class="card"><p><strong>백업 파일 불러오기</strong></p><p class="muted">내보낸 백업 파일을 고르면 지금 기록에 합쳐져요. (지금 기록이 지워지지 않아요)</p><input type="file" id="imp" accept=".json,application/json"></div><div id="loadMsg"></div>';
-  h += '<div class="card"><p><strong>앱 정보</strong></p><p class="muted">버전 ' + APP_VERSION + ' · 인터넷이 연결된 상태에서 열면 새 버전으로 자동으로 바뀌어요.</p><div class="q-actions"><button id="reload">새로고침</button></div></div>';
+  if (!IN_CLAUDE) h += '<div class="card"><p><strong>앱 정보</strong></p><p class="muted">버전 ' + APP_VERSION + ' · 인터넷이 연결된 상태에서 열면 새 버전으로 자동으로 바뀌어요.</p><div class="q-actions"><button id="reload">새로고침</button></div></div>';
+  else h += '<p class="muted">버전 ' + APP_VERSION + '</p>';
   app.innerHTML = h;
-  document.getElementById('reload').onclick = function () { location.reload(); };
+  var rl = document.getElementById('reload'); if (rl) rl.onclick = function () { location.reload(); };
   document.getElementById('exp').onclick = function () {
     var data = { format: 'selftest-backup-v1', exported: now(), tests: S.tests, progress: S.progress, wrong: S.wrong, history: S.history };
     var txt = JSON.stringify(data), d = new Date();
@@ -859,6 +1308,16 @@ function viewBackup() {
       a.href = URL.createObjectURL(blob); a.download = name;
       document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
       mark(); msg.textContent = name + ' 파일을 내려받았어요.';
+    }
+    /* Claude 아티팩트 안에서는 다운로드 링크가 막혀 있어서, Claude의 저장 기능으로 받는다 */
+    if (IN_CLAUDE) {
+      msg.textContent = '저장 창을 여는 중이에요.';
+      window.claude.use('downloads').then(function (dl) {
+        if (!dl) { msg.textContent = '이 화면에서는 파일을 받을 수 없어요. claude.ai에서 이 페이지를 열어 주세요.'; return; }
+        return dl.save({ filename: name, data: txt }).then(function () { mark(); msg.textContent = '백업했어요. (' + name + ')'; })
+          .catch(function (e) { msg.textContent = e && e.code === 'declined' ? '백업을 취소했어요.' : e && e.code === 'rate_limited' ? '저장 창이 이미 열려 있어요. 잠시 뒤 다시 눌러 주세요.' : '파일을 받지 못했어요. 잠시 뒤 다시 눌러 주세요.'; });
+      });
+      return;
     }
     /* 아이패드 홈 화면 앱에서는 공유 창으로 저장한다 (다운로드 링크가 잘 안 먹힘) */
     var file = null;
@@ -892,7 +1351,44 @@ function mergeBackup(b) {
 }
 
 /* ───────────── 라우팅 ───────────── */
+var DEFAULTS = { tests: {}, progress: {}, wrong: {}, history: [], meta: {} };
+function busy() { return view.name === 'test' || view.name === 'retry'; }
+/* 다른 기기에서 바뀐 기록을 받는다. 문제를 푸는 중에는 끝날 때까지 미룬다 */
+function applyRemote() {
+  var ks = pendingRemote; pendingRemote = [];
+  ks.forEach(function (k) { var v = CloudStore.peek(k); S[k] = v != null ? v : JSON.parse(JSON.stringify(DEFAULTS[k])); CloudStore.accept(k); });
+}
+CloudStore.onRemote = function (kinds) {
+  kinds.forEach(function (k) { if (pendingRemote.indexOf(k) < 0) pendingRemote.push(k); });
+  if (!busy() && (view.name === 'home' || view.name === 'history')) render();
+};
+/* 키보드: → 다음 문제, ← 이전 문제, Enter 채점하기, 숫자 1~9 선지 고르기 (문제 풀기·오답노트 복습 화면에서만) */
+var KEY_HINT = '<div class="key-hint no-print">키보드: <kbd>1</kbd>~<kbd>5</kbd> 선지 고르기 · <kbd>Enter</kbd> 채점하기 · <kbd>←</kbd> 이전 · <kbd>→</kbd> 다음</div>';
+document.addEventListener('keydown', function (e) {
+  if (view.name !== 'test' && view.name !== 'retry') return;
+  if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing || document.querySelector('.modal')) return;
+  var tg = e.target, tag = tg && tg.tagName, typing = tag === 'TEXTAREA' || tag === 'SELECT' || (tag === 'INPUT' && /^(text|search|number)$/i.test(tg.type));
+  function press(sel) { var b = app.querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); return true; } return false; }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    if (typing) return;
+    e.preventDefault(); /* 선지·표의 동그라미가 방향키로 바뀌지 않게 막는다 */
+    if (e.key === 'ArrowRight') press('#next') || press('#finish') || press('#end');
+    else press('#prev');
+  } else if (e.key === 'Enter') {
+    if (typing || tag === 'BUTTON' || tag === 'A') return;
+    press('[data-act=submit]');
+  } else if (/^[1-9]$/.test(e.key)) {
+    if (typing) return;
+    /* 화면에 보이는 순서대로 ① = 1. 복수정답은 누를 때마다 골랐다 풀었다 한다 */
+    var lb = app.querySelectorAll('#qbox label.opt')[+e.key - 1], inp = lb && lb.querySelector('input');
+    if (inp && !inp.disabled) { e.preventDefault(); inp.click(); }
+  }
+}, true);
+function setHdr() { var hd = document.querySelector('header.top'); if (hd) document.documentElement.style.setProperty('--hdr', hd.offsetHeight + 'px'); }
+window.addEventListener('resize', setHdr);
 function render() {
+  setHdr();
+  if (pendingRemote.length && !busy()) applyRemote();
   if (view.name !== 'test' && timerHandle) { clearInterval(timerHandle); timerHandle = null; }
   document.querySelectorAll('nav a').forEach(function (a) { var v = a.getAttribute('data-view'); a.className = (v === view.name || (v === 'home' && view.name === 'test') || (v === 'wrong' && view.name === 'retry')) ? 'on' : ''; });
   ({ home: viewHome, test: viewTest, wrong: viewWrong, retry: viewRetry, history: viewHistory, load: viewLoad, backup: viewBackup })[view.name]();
@@ -905,20 +1401,23 @@ function flush() { if (Store.mode() !== 'none') save(['progress']); }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flush(); });
 window.addEventListener('pagehide', flush);
 
+app.innerHTML = '<p class="muted">기록을 불러오는 중이에요.</p>';
 Store.open().then(function () {
   return Promise.all(['tests', 'progress', 'wrong', 'history', 'meta'].map(function (k) { return Store.get(k).then(function (v) { if (v != null) S[k] = v; }); }));
 }).then(function () {
   if (navigator.storage && navigator.storage.persist) { try { navigator.storage.persist(); } catch (e) {} }
   var info = document.getElementById('storage-info'), m = Store.mode();
-  info.textContent = (m === 'idb' ? '기록 저장 위치: 이 기기 (닫아도 유지돼요)' : m === 'ls' ? '기록 저장 위치: 이 기기 (보조 저장 방식)' : '') + ' · 버전 ' + APP_VERSION;
+  info.textContent = (m === 'cloud' ? '기록 저장 위치: Claude 계정 (다른 기기에서도 이어져요)' : m === 'idb' ? '기록 저장 위치: 이 기기 (닫아도 유지돼요)' : m === 'ls' ? '기록 저장 위치: 이 기기 (보조 저장 방식)' : '') + ' · 버전 ' + APP_VERSION;
   if (!S.meta || typeof S.meta !== 'object') S.meta = {};
+  if (migrate()) saveAll();
   render();
+  if (IN_CLAUDE && m !== 'cloud' && m !== 'none') toastWarn('Claude 계정 저장을 쓸 수 없어서, 이번에는 기록을 이 브라우저에만 저장해요.');
   if (m === 'none') toastWarn('이 화면에서는 기록이 저장되지 않아요. 홈 화면에 추가한 앱이나 사파리·크롬에서 열어 주세요.');
 });
 
 })();
 /* 홈 화면 앱: 인터넷 주소(https)에서 열었을 때만 오프라인용 서비스워커를 등록한다 */
-if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use)) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 }
 </script>
