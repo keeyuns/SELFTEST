@@ -1,6 +1,6 @@
 /* SELF TEST 오프라인용 서비스워커
    인터넷이 되면 항상 최신 파일을 받고(새 버전 자동 반영), 안 되면 저장해 둔 파일로 연다. */
-var CACHE = 'selftest-2026.10.17';
+var CACHE = 'selftest-2026.10.19d';
 var FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -27,7 +27,9 @@ self.addEventListener('fetch', function (e) {
     var timer = setTimeout(function () {
       fromCache().then(function (r) { if (r && !settled) { settled = true; resolve(r); } });
     }, 4000);
-    fetch(req).then(function (res) {
+    /* 화면 파일(html)은 브라우저 임시 저장본을 건너뛰고 항상 서버에서 새로 받는다 */
+    var url = new URL(req.url), isPage = req.mode === 'navigate' || /(\/|\.html)$/.test(url.pathname);
+    (isPage ? fetch(req.url, { cache: 'no-store', credentials: 'same-origin' }) : fetch(req)).then(function (res) {
       clearTimeout(timer);
       if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
       if (!settled) { settled = true; resolve(res); }
